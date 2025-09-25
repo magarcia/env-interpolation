@@ -1,0 +1,96 @@
+{
+  "name": "env-interpolation",
+  "version": "0.1.0",
+  "description": "A lightweight, zero-dependency utility for recursively interpolating ${VAR:default} placeholders in strings, objects, and arrays.",
+  "author": {
+    "name": "Martin Garcia",
+    "email": "contact@magarcia.io",
+    "url": "https://magarcia.io/"
+  },
+  "license": "MIT",
+  "keywords": [
+    "environment",
+    "variables",
+    "interpolation",
+    "string",
+    "object",
+    "json",
+    "yaml"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "start": "node ./dist/index.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "coverage": "vitest run --coverage",
+    "prepare": "husky",
+    "precommit": "lint-staged",
+    "prepush": "npm run test && npm run typecheck && npm run build",
+    "release": "semantic-release",
+    "release:dry": "semantic-release --dry-run",
+    "deps:check": "npm-check-updates",
+    "deps:update": "npm-check-updates -u",
+    "deps:unused": "knip",
+    "security": "npm audit --audit-level=moderate",
+    "ci": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/magarcia/env-interpolation.git"
+  },
+  "bugs": {
+    "url": "https://github.com/magarcia/env-interpolation/issues"
+  },
+  "homepage": "https://github.com/magarcia/env-interpolation#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@types/node": "^24.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "@vitest/coverage-istanbul": "^3.2.4",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsdoc": "^60.3.1",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.4.0",
+    "husky": "^9.1.7",
+    "knip": "^5.64.0",
+    "lint-staged": "^16.2.0",
+    "npm-check-updates": "^18.3.0",
+    "prettier": "^3.6.2",
+    "semantic-release": "^24.2.9",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.1",
+    "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.{css,scss,less}": [
+      "prettier --write"
+    ]
+  }
+}
