@@ -458,6 +458,22 @@ describe("infinite loop protection", () => {
     expect(result).not.toBe("Value: final_value");
     expect(result).toMatch(/Value: \$\{LEVEL\d+:/);
   });
+
+  it("should resolve more than 10 independent placeholders", () => {
+    const variables: Record<string, string> = {};
+    let input = "";
+
+    // Create 20 independent placeholders
+    for (let i = 1; i <= 20; i++) {
+      variables[`VAR${i}`] = `value${i}`;
+      input += `\${VAR${i}} `;
+    }
+
+    const result = interpolate(input.trim(), variables);
+    const expected = Object.values(variables).join(" ");
+
+    expect(result).toBe(expected);
+  });
 });
 
 describe("generic return type", () => {

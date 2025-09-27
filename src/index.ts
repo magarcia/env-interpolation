@@ -98,75 +98,92 @@ function replace(
   const { escape = true } = options;
 
   // Iterate until no more changes (supports nested placeholders resolved via defaults)
-  let searchFrom = 0;
   let passes = 0;
   do {
     previous = result;
-    const match = findNextPlaceholder(result, searchFrom);
-    if (!match) break;
-    searchFrom = 0; // Reset for next iteration
-
     passes++;
     if (passes > MAX_INTERPOLATION_PASSES) break;
 
-    const { start, end, inner, full } = match;
-    const { key, defaultValue } = parsePlaceholder(inner);
-    // Count preceding backslashes
-    let backslashes = 0;
-    let cursor = start - 1;
-    while (cursor >= 0 && result[cursor] === "\\") {
-      backslashes++;
-      cursor--;
-    }
+    let searchFrom = 0;
+    let anyChange = false;
 
-    if (escape && backslashes > 0 && backslashes % 2 === 1) {
-      // Odd number of preceding backslashes escapes placeholder.
-      // Consume one backslash for escaping, keep the rest as pairs.
-      const remainingBackslashes = Math.floor(backslashes / 2);
+    // Process all placeholders in the current string in one pass
+    while (true) {
+      const match = findNextPlaceholder(result, searchFrom);
+      if (!match) break;
+
+      const { start, end, inner, full } = match;
+      const { key, defaultValue } = parsePlaceholder(inner);
+      // Count preceding backslashes
+      let backslashes = 0;
+      let cursor = start - 1;
+      while (cursor >= 0 && result[cursor] === "\\") {
+        backslashes++;
+        cursor--;
+      }
+
+      if (escape && backslashes > 0 && backslashes % 2 === 1) {
+        // Odd number of preceding backslashes escapes placeholder.
+        // Consume one backslash for escaping, keep the rest as pairs.
+        const remainingBackslashes = Math.floor(backslashes / 2);
+        const prefix =
+          result.substring(0, start - backslashes) +
+          "\\".repeat(remainingBackslashes);
+        const literal = result.substring(start, end + 1);
+        result = prefix + literal + result.substring(end + 1);
+        // Skip past the escaped placeholder to avoid processing it again
+        searchFrom = prefix.length + literal.length;
+        // Note: escaped placeholders are processed but don't count as "changes" for nested resolution
+        continue;
+      }
+
+      if (!isValidVarName(key)) {
+        // Leave placeholder literal; normalize backslashes (remove one if odd)
+        const removeOne = backslashes % 2 === 1 ? 1 : 0;
+        result =
+          result.substring(0, start - backslashes) +
+          "\\".repeat(backslashes - removeOne) +
+          "${" +
+          result.substring(start + 2);
+        // Move search position past this placeholder to avoid infinite loop
+        searchFrom = start - backslashes + (backslashes - removeOne) + 2;
+        anyChange = true;
+        continue;
+      }
+
+      const value = variables[key];
+      let replacement = full; // default: keep original
+
+      if (value !== undefined) {
+        replacement = String(value);
+        anyChange = true;
+      } else if (defaultValue !== undefined) {
+        // Empty default (e.g. ${NAME:}) => keep original placeholder
+        if (defaultValue !== "") {
+          // Strip wrapping quotes if present
+          replacement = defaultValue.replace(/^"|"$/g, "");
+          anyChange = true;
+        }
+      }
+
+      // Interpolation path: handle backslashes appropriately
+      // For escape mode: pairs of backslashes become single backslashes
+      // For non-escape mode: backslashes are kept as-is
+      let finalBackslashes = backslashes;
+      if (escape && backslashes > 0) {
+        finalBackslashes = Math.floor(backslashes / 2);
+      }
       const prefix =
         result.substring(0, start - backslashes) +
-        "\\".repeat(remainingBackslashes);
-      const literal = result.substring(start, end + 1);
-      result = prefix + literal + result.substring(end + 1);
-      // Skip past the escaped placeholder to avoid processing it again
-      searchFrom = prefix.length + literal.length;
-      continue;
+        "\\".repeat(finalBackslashes);
+      result = prefix + replacement + result.substring(end + 1);
+
+      // Continue searching from after the replacement
+      searchFrom = prefix.length + replacement.length;
     }
 
-    if (!isValidVarName(key)) {
-      // Leave placeholder literal; normalize backslashes (remove one if odd)
-      const removeOne = backslashes % 2 === 1 ? 1 : 0;
-      result =
-        result.substring(0, start - backslashes) +
-        "\\".repeat(backslashes - removeOne) +
-        "${" +
-        result.substring(start + 2);
-      continue;
-    }
-
-    const value = variables[key];
-    let replacement = full; // default: keep original
-
-    if (value !== undefined) {
-      replacement = String(value);
-    } else if (defaultValue !== undefined) {
-      // Empty default (e.g. ${NAME:}) => keep original placeholder
-      if (defaultValue !== "") {
-        // Strip wrapping quotes if present
-        replacement = defaultValue.replace(/^"|"$/g, "");
-      }
-    }
-
-    // Interpolation path: handle backslashes appropriately
-    // For escape mode: pairs of backslashes become single backslashes
-    // For non-escape mode: backslashes are kept as-is
-    let finalBackslashes = backslashes;
-    if (escape && backslashes > 0) {
-      finalBackslashes = Math.floor(backslashes / 2);
-    }
-    const prefix =
-      result.substring(0, start - backslashes) + "\\".repeat(finalBackslashes);
-    result = prefix + replacement + result.substring(end + 1);
+    // If no changes were made in this pass, we're done
+    if (!anyChange) break;
   } while (result !== previous);
 
   return result;
