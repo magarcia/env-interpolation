@@ -4,7 +4,7 @@ the requirements below.
 
 Bug fixes and new features should include tests and documentation.
 
-Contributors guide: https://github.com/magarcia/mcp-tool-selector/blob/main/CONTRIBUTING.md
+Contributors guide: https://github.com/magarcia/env-interpolation/blob/main/CONTRIBUTING.md
 -->
 
 ##### Description
