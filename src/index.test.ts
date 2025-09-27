@@ -417,6 +417,16 @@ describe("escaping placeholders", () => {
     // Three backslashes: one pair becomes single backslash, one escapes placeholder
     expect(result).toBe("Value: \\${INVALID-NAME:foo}");
   });
+
+  it("escape: false preserves backslashes for invalid placeholders", () => {
+    const result = interpolate("\\${INVALID-VAR}", {}, { escape: false });
+    expect(result).toBe("\\${INVALID-VAR}");
+  });
+
+  it("escape: true still removes backslashes for invalid placeholders", () => {
+    const result = interpolate("\\${INVALID-VAR}", {}, { escape: true });
+    expect(result).toBe("${INVALID-VAR}");
+  });
 });
 
 describe("edge cases", () => {
@@ -703,8 +713,8 @@ describe("branch coverage tests", () => {
   });
 
   it("should trigger removeOne = 1 branch (branch 18)", () => {
-    // Test odd backslashes with invalid variable name and escape=false
-    const result = replace("\\${INVALID-NAME:foo}", {}, { escape: false });
+    // Test odd backslashes with invalid variable name and escape=true
+    const result = replace("\\${INVALID-NAME:foo}", {}, { escape: true });
     expect(result).toBe("${INVALID-NAME:foo}");
   });
 

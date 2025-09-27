@@ -235,7 +235,7 @@ function replace(
 
       if (!isValidVarName(key)) {
         // Leave placeholder literal; normalize backslashes (remove one if odd)
-        const removeOne = backslashes % 2 === 1 ? 1 : 0;
+        const removeOne = escape && backslashes % 2 === 1 ? 1 : 0;
         result =
           result.substring(0, start - backslashes) +
           "\\".repeat(backslashes - removeOne) +
