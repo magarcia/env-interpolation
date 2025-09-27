@@ -336,6 +336,20 @@ describe("env variables", () => {
     );
     expect(result).toBe("Hello Guest! NODE_ENV: dev");
   });
+
+  it("works without process object (browser environment)", () => {
+    // Mock environment without process
+    const originalProcess = global.process;
+    // @ts-expect-error - Intentionally deleting global.process for browser simulation
+    delete global.process;
+
+    try {
+      const result = interpolate("Hello ${NAME:World}!", { NAME: "Test" });
+      expect(result).toBe("Hello Test!");
+    } finally {
+      global.process = originalProcess;
+    }
+  });
 });
 
 describe("escaping placeholders", () => {

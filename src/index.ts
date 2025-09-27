@@ -1,5 +1,3 @@
-import process from "node:process";
-
 // Default variables source (process.env in Node environments)
 const defaults: Record<string, string | undefined> =
   typeof process !== "undefined" ? process.env : {};
