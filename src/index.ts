@@ -55,6 +55,26 @@ const VAR_NAME_RE = /^[A-Z0-9_]+$/i;
 const MAX_INTERPOLATION_PASSES = 10;
 
 /**
+ * Removes wrapping quotes from a string if they match (both single or both double).
+ * Only removes quotes if the string starts and ends with the same quote type.
+ * Preserves mismatched quotes and nested quotes.
+ *
+ * @param s The string to unquote
+ * @returns The string with matching wrapping quotes removed
+ *
+ * @example
+ * unquote('"hello"') // returns: hello
+ * unquote("'world'") // returns: world
+ * unquote('"mixed\'') // returns: "mixed' (no change)
+ * unquote('unquoted') // returns: unquoted (no change)
+ */
+function unquote(s: string): string {
+  return (s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))
+    ? s.slice(1, -1)
+    : s;
+}
+
+/**
  * Finds the next placeholder in a string of the form `${...}` while supporting
  * nested braces (e.g. `${OUTER:${INNER:Default}}`). Returns metadata needed for
  * replacement or `null` if none found.
@@ -256,8 +276,8 @@ function replace(
       } else if (defaultValue !== undefined) {
         // Empty default (e.g. ${NAME:}) => keep original placeholder
         if (defaultValue !== "") {
-          // Strip wrapping quotes if present
-          replacement = defaultValue.replace(/^"|"$/g, "");
+          // Strip wrapping quotes if present (both single and double)
+          replacement = unquote(defaultValue);
           anyChange = true;
         }
       }

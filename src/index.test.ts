@@ -117,6 +117,22 @@ describe("string interpolation", () => {
     expect(result).toBe("Hello Alice");
   });
 
+  it("strips both single and double quotes from defaults", () => {
+    expect(interpolate('${VAR:"double"}', {})).toBe('double');
+    expect(interpolate("${VAR:'single'}", {})).toBe('single');
+    expect(interpolate('${VAR:unquoted}', {})).toBe('unquoted');
+  });
+
+  it("preserves mismatched quotes", () => {
+    expect(interpolate('${VAR:"mixed\'}', {})).toBe('"mixed\'');
+    expect(interpolate("${VAR:'mixed\"}", {})).toBe("'mixed\"");
+  });
+
+  it("preserves nested quotes correctly", () => {
+    expect(interpolate('${VAR:"She said \'hello\'"}', {})).toBe("She said 'hello'");
+    expect(interpolate("${VAR:'He said \"hi\"'}", {})).toBe('He said "hi"');
+  });
+
   it("should leave placeholder with invalid variable name unchanged (dash)", () => {
     const input = "Value: ${INVALID-NAME:foo}";
     const result = interpolate(input);
@@ -544,13 +560,13 @@ describe("enhanced edge cases and performance", () => {
   });
 
   it("quote handling behavior", () => {
-    // Test current double quote stripping
+    // Test double quote stripping
     const result1 = interpolate('${VAR:"quoted default"}', {});
     expect(result1).toBe("quoted default");
 
-    // Test single quotes (document current behavior)
+    // Test single quote stripping (enhanced behavior)
     const result2 = interpolate("${VAR:'single quoted'}", {});
-    expect(result2).toBe("'single quoted'"); // Currently NOT stripped
+    expect(result2).toBe("single quoted"); // NOW stripped
   });
 
   it("empty string handling", () => {
