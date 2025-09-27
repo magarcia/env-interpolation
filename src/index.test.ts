@@ -520,6 +520,164 @@ describe("generic return type", () => {
   });
 });
 
+describe("enhanced edge cases and performance", () => {
+  it("performance: handles large strings without degradation", () => {
+    const largeString =
+      "prefix ".repeat(1000) + "${VAR:default}" + " suffix".repeat(1000);
+
+    const start = performance.now();
+    const result = interpolate(largeString, { VAR: "test" });
+    const duration = performance.now() - start;
+
+    expect(result).toContain("test");
+    expect(duration).toBeLessThan(100); // Should complete in <100ms
+  });
+
+  it("quote handling behavior", () => {
+    // Test current double quote stripping
+    const result1 = interpolate('${VAR:"quoted default"}', {});
+    expect(result1).toBe("quoted default");
+
+    // Test single quotes (document current behavior)
+    const result2 = interpolate("${VAR:'single quoted'}", {});
+    expect(result2).toBe("'single quoted'"); // Currently NOT stripped
+  });
+
+  it("empty string handling", () => {
+    // Empty input string
+    const result1 = interpolate("", { VAR: "test" });
+    expect(result1).toBe("");
+
+    // String with only whitespace
+    const result2 = interpolate("   \n\t   ", { VAR: "test" });
+    expect(result2).toBe("   \n\t   ");
+
+    // Placeholder with empty variable name after colon
+    const result3 = interpolate("${:default}", {});
+    expect(result3).toBe("${:default}"); // Should remain unchanged
+  });
+
+  it("very long variable names", () => {
+    const longVarName = "A".repeat(100) + "_" + "1".repeat(50);
+    const placeholder = `\${${longVarName}:default}`;
+
+    // Test with undefined variable (should use default)
+    const result1 = interpolate(placeholder, {});
+    expect(result1).toBe("default");
+
+    // Test with defined variable
+    const variables = { [longVarName]: "long_var_value" };
+    const result2 = interpolate(placeholder, variables);
+    expect(result2).toBe("long_var_value");
+  });
+
+  it("special characters in defaults", () => {
+    // Special characters in unquoted defaults
+    const result1 = interpolate("${VAR:hello@world.com}", {});
+    expect(result1).toBe("hello@world.com");
+
+    // Unicode characters
+    const result2 = interpolate("${VAR:🚀 Hello 世界}", {});
+    expect(result2).toBe("🚀 Hello 世界");
+
+    // Mixed quotes and special chars in quoted defaults
+    const result3 = interpolate(
+      "${VAR:\"Value with 'mixed' quotes & symbols!\"}",
+      {},
+    );
+    expect(result3).toBe("Value with 'mixed' quotes & symbols!");
+
+    // Newlines and tabs in defaults
+    const result4 = interpolate('${VAR:"Line 1\nLine 2\tTabbed"}', {});
+    expect(result4).toBe("Line 1\nLine 2\tTabbed");
+  });
+
+  it("maximum nesting depth stress test", () => {
+    // Create deeply nested structure (more complex than the existing test)
+    const variables: Record<string, string> = {};
+    let nestedDefault = "final_value";
+
+    // Build nested chain backwards
+    for (let i = 20; i >= 1; i--) {
+      const varName = `NESTED_${i}`;
+      const nextVar =
+        i === 20 ? "final_value" : `\${NESTED_${i + 1}:${nestedDefault}}`;
+      variables[varName] = nextVar;
+      nestedDefault = nextVar;
+    }
+
+    // Test deep nesting with MAX_INTERPOLATION_PASSES limit
+    const result = interpolate("${NESTED_1:fallback}", variables);
+
+    // Due to MAX_INTERPOLATION_PASSES limit, this should not fully resolve
+    expect(result).not.toBe("final_value");
+    expect(result).toMatch(/\${NESTED_\d+:/); // Should contain unresolved placeholder
+  });
+
+  it("performance with many independent placeholders", () => {
+    // Create string with many independent placeholders
+    const placeholderCount = 100;
+    let inputString = "";
+    const variables: Record<string, string> = {};
+
+    for (let i = 1; i <= placeholderCount; i++) {
+      const varName = `VAR_${i}`;
+      variables[varName] = `value_${i}`;
+      inputString += `\${${varName}:default_${i}} `;
+    }
+
+    const start = performance.now();
+    const result = interpolate(inputString.trim(), variables);
+    const duration = performance.now() - start;
+
+    // Verify all placeholders were replaced
+    expect(result).not.toContain("${");
+    expect(result).toContain("value_1");
+    expect(result).toContain(`value_${placeholderCount}`);
+    expect(duration).toBeLessThan(50); // Should be very fast for independent placeholders
+  });
+
+  it("boundary conditions with braces", () => {
+    // Malformed placeholders with unbalanced braces
+    const result1 = interpolate("${UNCLOSED", {});
+    expect(result1).toBe("${UNCLOSED");
+
+    const result2 = interpolate("UNOPENED}", {});
+    expect(result2).toBe("UNOPENED}");
+
+    // Multiple opening braces
+    const result3 = interpolate("${{VAR:default}}", {});
+    expect(result3).toBe("${{VAR:default}}"); // Invalid, should remain unchanged
+
+    // Empty placeholder
+    const result4 = interpolate("${}", {});
+    expect(result4).toBe("${}"); // Invalid, should remain unchanged
+  });
+
+  it("stress test with mixed valid and invalid placeholders", () => {
+    const input = [
+      "${VALID_VAR:default1}",
+      "${invalid-var:default2}",
+      "${:default3}",
+      "${VALID2:default4}",
+      "${INVALID@:default5}",
+      "${VALID_3:default6}",
+    ].join(" ");
+
+    const result = interpolate(input, {
+      VALID_VAR: "replaced1",
+      VALID_3: "replaced3",
+    });
+
+    expect(result).toContain("replaced1");
+    expect(result).toContain("replaced3");
+    expect(result).toContain("${invalid-var:default2}"); // Invalid, unchanged
+    expect(result).toContain("${:default3}"); // Invalid, unchanged
+    expect(result).toContain("default4"); // Valid var, using default
+    expect(result).toContain("${INVALID@:default5}"); // Invalid, unchanged
+  });
+});
+
 describe("branch coverage tests", () => {
   it("should trigger escape default parameter (branch 11)", () => {
     // Pass options object without escape property to trigger default
