@@ -57,7 +57,7 @@
     "deps:check": "npm-check-updates",
     "deps:update": "npm-check-updates -u",
     "deps:unused": "knip",
-    "security": "npm audit --audit-level=moderate",
+    "security": "npm audit --omit=dev --audit-level=moderate",
     "ci": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "repository": {
