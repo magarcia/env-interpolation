@@ -69,7 +69,8 @@ const MAX_INTERPOLATION_PASSES = 10;
  * unquote('unquoted') // returns: unquoted (no change)
  */
 function unquote(s: string): string {
-  return (s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))
+  return (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
     ? s.slice(1, -1)
     : s;
 }

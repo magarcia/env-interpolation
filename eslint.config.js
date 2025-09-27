@@ -19,6 +19,7 @@ export default [
     files: ["**/*.ts"],
     plugins: {
       jsdoc,
+      prettier,
     },
     rules: {
       "prettier/prettier": "error",
@@ -55,11 +56,6 @@ export default [
       "jsdoc/no-types": "error", // Types in TS files are redundant
       "jsdoc/require-param-type": "off",
       "jsdoc/require-returns-type": "off",
-    },
-  },
-  {
-    plugins: {
-      prettier,
     },
   },
 ];

@@ -118,18 +118,20 @@ describe("string interpolation", () => {
   });
 
   it("strips both single and double quotes from defaults", () => {
-    expect(interpolate('${VAR:"double"}', {})).toBe('double');
-    expect(interpolate("${VAR:'single'}", {})).toBe('single');
-    expect(interpolate('${VAR:unquoted}', {})).toBe('unquoted');
+    expect(interpolate('${VAR:"double"}', {})).toBe("double");
+    expect(interpolate("${VAR:'single'}", {})).toBe("single");
+    expect(interpolate("${VAR:unquoted}", {})).toBe("unquoted");
   });
 
   it("preserves mismatched quotes", () => {
-    expect(interpolate('${VAR:"mixed\'}', {})).toBe('"mixed\'');
+    expect(interpolate("${VAR:\"mixed'}", {})).toBe("\"mixed'");
     expect(interpolate("${VAR:'mixed\"}", {})).toBe("'mixed\"");
   });
 
   it("preserves nested quotes correctly", () => {
-    expect(interpolate('${VAR:"She said \'hello\'"}', {})).toBe("She said 'hello'");
+    expect(interpolate("${VAR:\"She said 'hello'\"}", {})).toBe(
+      "She said 'hello'",
+    );
     expect(interpolate("${VAR:'He said \"hi\"'}", {})).toBe('He said "hi"');
   });
 
