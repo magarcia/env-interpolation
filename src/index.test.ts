@@ -251,6 +251,20 @@ describe("object interpolation", () => {
     // Ensure original unchanged
     expect(JSON.stringify(original)).toBe(cloneBefore);
   });
+
+  it("ignores inherited properties", () => {
+    class Parent {
+      inherited = "should not process";
+    }
+
+    const obj = Object.create(Parent.prototype);
+    obj.own = "${VAR:default}";
+
+    const result = interpolate(obj, { VAR: "test" });
+
+    expect(result.own).toBe("test");
+    expect(result.inherited).toBeUndefined();
+  });
 });
 
 describe("array interpolation", () => {

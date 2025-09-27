@@ -197,7 +197,7 @@ function traverse(value: unknown, replacer: (str: string) => string): unknown {
   if (typeof value === "object" && value !== null) {
     const input = value as PlainObject;
     const output: PlainObject = {};
-    for (const key in input) {
+    for (const key of Object.keys(input)) {
       output[key] = traverse(input[key], replacer);
     }
     return output;
