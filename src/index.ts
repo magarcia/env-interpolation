@@ -2,12 +2,51 @@
 const defaults: Record<string, string | undefined> =
   typeof process !== "undefined" ? process.env : {};
 
-// Public input shape supported by interpolate
+/**
+ * Plain object type representing a record with string keys and unknown values.
+ * Used internally for type-safe object traversal during interpolation.
+ */
 type PlainObject = Record<string, unknown>;
+
+/**
+ * Union type representing all valid input types that can be processed by the interpolate function.
+ * Supports strings, plain objects, and arrays for recursive interpolation.
+ *
+ * @example
+ * // String input
+ * const stringInput: Input = 'Hello ${NAME:Guest}!';
+ *
+ * @example
+ * // Object input
+ * const objectInput: Input = { greeting: 'Hello ${NAME:Guest}!' };
+ *
+ * @example
+ * // Array input
+ * const arrayInput: Input = ['${GREETING:Hello}', '${NAME:World}'];
+ */
 export type Input = string | PlainObject | Array<unknown>;
 
+/**
+ * Configuration options for controlling interpolation behavior.
+ *
+ * @example
+ * // Enable escape processing (default)
+ * const options: InterpolateOptions = { escape: true };
+ * interpolate('Use \\${LITERAL} text', {}, options);
+ * // Returns: 'Use ${LITERAL} text'
+ *
+ * @example
+ * // Disable escape processing
+ * const options: InterpolateOptions = { escape: false };
+ * interpolate('Keep \\${LITERAL} unchanged', {}, options);
+ * // Returns: 'Keep \\${LITERAL} unchanged'
+ */
 export interface InterpolateOptions {
-  /** Enable escape processing: `\\${VAR}` becomes literal `${VAR}` (single escaping). */
+  /**
+   * Enable escape processing for placeholders. When true, backslashes can be used
+   * to escape placeholders: `\\${VAR}` becomes literal `${VAR}` (single escaping).
+   * Pairs of backslashes are reduced to single backslashes. Defaults to true.
+   */
   escape?: boolean;
 }
 
@@ -19,6 +58,34 @@ const MAX_INTERPOLATION_PASSES = 10;
  * Finds the next placeholder in a string of the form `${...}` while supporting
  * nested braces (e.g. `${OUTER:${INNER:Default}}`). Returns metadata needed for
  * replacement or `null` if none found.
+ *
+ * This function performs brace-balanced parsing to correctly handle nested placeholders
+ * within default values. It scans from a given index and returns detailed information
+ * about the first complete placeholder found.
+ *
+ * @param str The string to search for placeholders.
+ * @param fromIndex The starting index for the search. Defaults to 0.
+ * @returns An object containing placeholder metadata (start, end, inner content, full text) or null if no placeholder is found.
+ *
+ * @example
+ * // Simple placeholder
+ * findNextPlaceholder('Hello ${NAME:Guest}!');
+ * // Returns: { start: 6, end: 17, inner: 'NAME:Guest', full: '${NAME:Guest}' }
+ *
+ * @example
+ * // Nested placeholder in default value
+ * findNextPlaceholder('${GREETING:Hello ${USER:Guest}}');
+ * // Returns: { start: 0, end: 30, inner: 'GREETING:Hello ${USER:Guest}', full: '${GREETING:Hello ${USER:Guest}}' }
+ *
+ * @example
+ * // No placeholder found
+ * findNextPlaceholder('Just a regular string');
+ * // Returns: null
+ *
+ * @example
+ * // Searching from a specific index
+ * findNextPlaceholder('${A:1} and ${B:2}', 7);
+ * // Returns: { start: 9, end: 14, inner: 'B:2', full: '${B:2}' }
  */
 function findNextPlaceholder(
   str: string,
@@ -80,11 +147,42 @@ function isValidVarName(key: string): boolean {
 }
 
 /**
- * Interpolates a string with the provided variables.
+ * Interpolates a single string with the provided variables using recursive placeholder resolution.
+ * This is the core string interpolation function that handles the ${VARIABLE:default} syntax.
+ *
+ * The function supports escape sequences with backslashes, nested placeholder resolution,
+ * and iterative processing until no more changes occur. Variable names must contain only
+ * letters, numbers, and underscores to be considered valid.
  *
  * @param content The string content to interpolate.
- * @param variables The variables to use for interpolation.
- * @returns The interpolated string.
+ * @param variables A map of variable names to their string values. Defaults to `process.env`.
+ * @param options Configuration options including escape processing behavior.
+ * @returns The interpolated string with all placeholders resolved.
+ *
+ * @example
+ * // Basic variable replacement
+ * replace('Hello ${NAME:World}!', { NAME: 'Alice' });
+ * // Returns: 'Hello Alice!'
+ *
+ * @example
+ * // Using default values
+ * replace('Server: ${HOST:localhost}:${PORT:8080}', { HOST: 'api.example.com' });
+ * // Returns: 'Server: api.example.com:8080'
+ *
+ * @example
+ * // Nested placeholder resolution
+ * replace('${GREETING:Hello ${USER:Guest}}!', { USER: 'Bob' });
+ * // Returns: 'Hello Bob!'
+ *
+ * @example
+ * // Escaped placeholders (when escape option is true)
+ * replace('Use \\${LITERAL} for literal text', {}, { escape: true });
+ * // Returns: 'Use ${LITERAL} for literal text'
+ *
+ * @example
+ * // Invalid variable names are left unchanged
+ * replace('${invalid-name:default}', {});
+ * // Returns: '${invalid-name:default}'
  */
 function replace(
   content: string,
@@ -210,6 +308,12 @@ function traverse(value: unknown, replacer: (str: string) => string): unknown {
  * Recursively interpolates string values within a nested input structure using a provided
  * variables map. Supports strings, arrays, and plain objects.
  *
+ * Variables are specified using ${VARIABLE_NAME:default_value} syntax. If a variable
+ * is not found in the variables map, the default value is used. If no default is
+ * provided, the placeholder is left unchanged. The interpolation process supports
+ * nested structures and recursive placeholder resolution, allowing defaults to
+ * contain their own placeholders.
+ *
  * @param content The input to process. May be a string, array, or object graph.
  * @param variables A map of variable names to their string values. Defaults to `process.env`.
  * @param options Configuration options for interpolation behavior.
@@ -224,6 +328,31 @@ function traverse(value: unknown, replacer: (str: string) => string): unknown {
  * // Object interpolation
  * interpolate({ greeting: 'Hello ${NAME:Guest}!' }, { NAME: 'Bob' });
  * // Returns: { greeting: 'Hello Bob!' }
+ *
+ * @example
+ * // Array interpolation with defaults
+ * interpolate(['${GREETING:Hello}', '${NAME:World}'], { NAME: 'TypeScript' });
+ * // Returns: ['Hello', 'TypeScript']
+ *
+ * @example
+ * // Nested placeholder resolution
+ * interpolate('${MESSAGE:Hello ${USER:Guest}}', { USER: 'Alice' });
+ * // Returns: 'Hello Alice'
+ *
+ * @example
+ * // Complex object with multiple placeholders
+ * interpolate({
+ *   title: '${TITLE:Welcome}',
+ *   message: 'Hello ${NAME:Guest}, you have ${COUNT:0} messages',
+ *   meta: { env: '${NODE_ENV:development}' }
+ * }, { NAME: 'John', COUNT: '5' });
+ * // Returns: { title: 'Welcome', message: 'Hello John, you have 5 messages', meta: { env: 'development' } }
+ *
+ * @example
+ * // Using process.env (default variables source)
+ * process.env.API_URL = 'https://api.example.com';
+ * interpolate('Connecting to ${API_URL:localhost}');
+ * // Returns: 'Connecting to https://api.example.com'
  */
 export function interpolate<T extends Input>(
   content: T,
