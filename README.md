@@ -22,12 +22,30 @@ pnpm add env-interpolation
 
 **Requirements:**
 - Node.js 18 or higher
-- ESM-only module (does not support CommonJS `require()`)
+- Supports both ESM (`import`) and CommonJS (`require`)
 
 ## Quick Start
 
+### ESM (import)
+
 ```ts
 import { interpolate } from "env-interpolation";
+
+const greeting = interpolate("Hello ${NAME:Guest}!", { NAME: "Ada" });
+// "Hello Ada!"
+
+const config = interpolate({
+  url: "${API_URL:https://api.example.com}",
+  timeout: "${TIMEOUT:5000}",
+  features: ["${FEATURE_PRIMARY:alpha}", "${FEATURE_SECONDARY:beta}"],
+});
+// All placeholders resolved using process.env by default
+```
+
+### CommonJS (require)
+
+```js
+const { interpolate } = require("env-interpolation");
 
 const greeting = interpolate("Hello ${NAME:Guest}!", { NAME: "Ada" });
 // "Hello Ada!"
