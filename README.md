@@ -1,5 +1,10 @@
 # env-interpolation
 
+[![NPM Version](https://img.shields.io/npm/v/env-interpolation.svg)](https://www.npmjs.com/package/env-interpolation)
+[![CI](https://github.com/magarcia/env-interpolation/actions/workflows/ci.yml/badge.svg)](https://github.com/magarcia/env-interpolation/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/magarcia/env-interpolation/graph/badge.svg)](https://codecov.io/gh/magarcia/env-interpolation)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Recursively resolve `${VAR}` style placeholders in strings, objects, or arrays using environment variables or custom maps.
 
 ## Features
