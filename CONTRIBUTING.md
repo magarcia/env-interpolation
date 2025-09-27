@@ -163,19 +163,43 @@ Ready to contribute? Here's how to set up your environment and get started.
 
 **Development**
 
-This project uses `tsx` to run TypeScript files directly, so you don't need to compile the code every time you make a change.
+This project is a TypeScript library. Here are the main commands you'll use during development:
 
-- To run the server in development mode:
+- To run tests:
   ```bash
-  npm run dev
+  npm run test
   ```
-- To build the project:
+- To run tests in watch mode (for continuous development):
+  ```bash
+  npm run test:watch
+  ```
+- To run tests with coverage:
+  ```bash
+  npm run coverage
+  ```
+- To build the library:
   ```bash
   npm run build
   ```
-- To run the compiled code:
+- To check TypeScript types:
   ```bash
-  npm run start
+  npm run typecheck
+  ```
+- To lint the code:
+  ```bash
+  npm run lint
+  ```
+- To automatically fix linting issues:
+  ```bash
+  npm run lint:fix
+  ```
+- To format the code:
+  ```bash
+  npm run format
+  ```
+- To run the full CI pipeline locally (lint, typecheck, test, build):
+  ```bash
+  npm run ci
   ```
 
 **Making Changes**
@@ -185,13 +209,21 @@ This project uses `tsx` to run TypeScript files directly, so you don't need to c
     git checkout -b my-awesome-feature
     ```
 2.  Make your changes.
-3.  Make sure the code lints and builds correctly.
-4.  Commit your changes. Please follow the [commit message guidelines](#commit-messages).
-5.  Push your branch to your fork:
+3.  Write or update tests as needed:
+    ```bash
+    npm run test:watch
+    ```
+4.  Ensure all checks pass:
+    ```bash
+    npm run ci
+    ```
+    This will run linting, type checking, tests, and build the library.
+5.  Commit your changes. Please follow the [commit message guidelines](#commit-messages).
+6.  Push your branch to your fork:
     ```bash
     git push origin my-awesome-feature
     ```
-6.  Open a pull request to the `main` branch of the original repository.
+7.  Open a pull request to the `main` branch of the original repository.
 
 ### Improving The Documentation
 
@@ -234,7 +266,7 @@ Allowed types:
 - chore — other changes that don't modify src or test files
 - revert — revert a previous commit
 
-Scopes (optional): prefer the folder or module you touched. Common scopes in this repo include: `config`, `instructions`, `tool-registry`, `upstream`, `oauth`, `logger`, `index`, `docs`, `ci`.
+Scopes (optional): prefer the folder or module you touched. Common scopes in this repo include: `src`, `tests`, `docs`, `ci`, `build`.
 
 Breaking changes: indicate with either an exclamation mark after the type/scope (e.g., `feat!: ...`) or add a footer starting with `BREAKING CHANGE:` describing what changed and required actions.
 
@@ -243,19 +275,19 @@ Footers: use for metadata like issue references, e.g., `Closes #123`, `Refs #456
 Examples:
 
 ```
-feat(config): add support for tool filtering
+feat: add support for nested object interpolation
 
-fix(oauth): handle missing state parameter during callback
+fix: handle missing environment variables gracefully
 
-refactor(tool-registry): simplify registration flow
+refactor: simplify interpolation parsing logic
 
-perf(upstream): batch tool capability requests to reduce latency
+perf: optimize string replacement for large objects
 
 docs: clarify configuration schema in README and examples
 
-feat!: switch default port to 8976
+feat!: change default interpolation syntax
 
-BREAKING CHANGE: the server now listens on 8976 by default. Use MTS_PORT to override.
+BREAKING CHANGE: placeholders now use ${VAR:default} syntax instead of {{VAR:default}}. Update your templates accordingly.
 ```
 
 Tips:
