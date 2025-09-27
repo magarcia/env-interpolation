@@ -20,10 +20,14 @@ yarn add env-interpolation
 pnpm add env-interpolation
 ```
 
+**Requirements:**
+- Node.js 18 or higher
+- ESM-only module (does not support CommonJS `require()`)
+
 ## Quick Start
 
 ```ts
-import interpolate from "env-interpolation";
+import { interpolate } from "env-interpolation";
 
 const greeting = interpolate("Hello ${NAME:Guest}!", { NAME: "Ada" });
 // "Hello Ada!"
@@ -61,6 +65,8 @@ Returns the interpolated value while preserving the original shape and TypeScrip
 ## Escaping examples
 
 ```ts
+import { interpolate } from "env-interpolation";
+
 interpolate("Literal \\${PASSWORD}");
 // "Literal ${PASSWORD}" (escape enabled, the placeholder is left as-is)
 
@@ -72,6 +78,8 @@ interpolate("Literal \\${PASSWORD}", { PASSWORD: "secret" }, { escape: false });
 The exported function is fully typed. The returned value retains the structural type of the input, so narrowed types stay intact:
 
 ```ts
+import { interpolate } from "env-interpolation";
+
 const settings = {
   port: "${PORT:3000}",
   flags: ["${PRIMARY_FLAG:enabled}", "${SECONDARY_FLAG:disabled}"],
