@@ -69,7 +69,7 @@ const config = interpolate({
 
 - `${VAR}` — looks up `VAR` in the variable map or `process.env`.
 - `${VAR:Default}` — uses `Default` when `VAR` is missing or `undefined`.
-- `${VAR:"Quoted value"}` — quotes let you keep colons or other placeholders in defaults.
+- `${VAR:'Quoted value'}` or `${VAR:"Quoted value"}` — quotes let you keep colons or other placeholders in defaults. Both single and double quotes are stripped.
 - Invalid variable names (anything beyond letters, numbers, and `_`) are left untouched.
 - Defaults can contain nested placeholders; they are resolved in subsequent passes.
 
