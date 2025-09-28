@@ -81,6 +81,7 @@ const config = interpolate({
 - `variables` (`Record<string, string | undefined>`): optional override map. Defaults to `process.env` when available.
 - `options`:
   - `escape` (`boolean`, default `true`): when enabled, a single preceding backslash escapes a placeholder (`\\${VAR}` → `${VAR}`). Disable to treat backslashes as literal characters.
+  - `maxPasses` (`number`, default `10`): maximum interpolation passes. Lower to cap work on pathological nesting; raise to resolve deeper chains.
 
 Returns the interpolated value while preserving the original shape and TypeScript type.
 
