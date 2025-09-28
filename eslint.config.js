@@ -1,5 +1,6 @@
 import jsdoc from "eslint-plugin-jsdoc";
 import prettier from "eslint-plugin-prettier";
+import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -58,4 +59,5 @@ export default [
       "jsdoc/require-returns-type": "off",
     },
   },
+  prettierConfig, // Must be last to disable conflicting rules
 ];
