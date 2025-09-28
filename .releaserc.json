@@ -27,7 +27,9 @@
         ],
         "successComment": ":tada: This ${issue.pull_request ? 'pull request' : 'issue'} is included in version ${nextRelease.version} :tada:\n\nThe release is available on [GitHub release](${releases.filter(release => release.name === 'GitHub release')[0].url}) and [npm](https://www.npmjs.com/package/${name})",
         "successCommentCondition": "<%= issue.user.type !== 'Bot' %>",
-        "releasedLabels": ["released<%= nextRelease.channel ? ` on @${nextRelease.channel}` : '' %>"],
+        "releasedLabels": [
+          "released<%= nextRelease.channel ? ` on @${nextRelease.channel}` : '' %>"
+        ],
         "addReleases": "top",
         "discussionCategoryName": "Announcements",
         "releaseNameTemplate": "<%= nextRelease.name %> 🚀",

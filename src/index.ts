@@ -321,20 +321,31 @@ function replace(
   return result;
 }
 
-function traverse(value: unknown, replacer: (str: string) => string): unknown {
+function traverse(
+  value: unknown,
+  replacer: (s: string) => string,
+  seen = new WeakMap(),
+): unknown {
   if (typeof value === "string") return replacer(value);
 
-  if (Array.isArray(value)) {
-    return value.map((item) => traverse(item, replacer));
-  }
+  if (value && typeof value === "object") {
+    if (seen.has(value as object)) return seen.get(value as object);
 
-  if (typeof value === "object" && value !== null) {
-    const input = value as PlainObject;
-    const output: PlainObject = {};
-    for (const key of Object.keys(input)) {
-      output[key] = traverse(input[key], replacer);
+    if (Array.isArray(value)) {
+      const out: unknown[] = [];
+      seen.set(value as object, out);
+      for (const item of value as Array<unknown>) {
+        out.push(traverse(item, replacer, seen));
+      }
+      return out;
     }
-    return output;
+
+    const out: Record<string, unknown> = {};
+    seen.set(value as object, out);
+    for (const k of Object.keys(value as Record<string, unknown>)) {
+      out[k] = traverse((value as Record<string, unknown>)[k], replacer, seen);
+    }
+    return out;
   }
 
   return value;

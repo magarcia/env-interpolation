@@ -2,6 +2,17 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { interpolate, replace, findNextPlaceholder } from "./index.js";
 
+type NestedRefRecord = Record<string, unknown> & { ref: NestedRefRecord };
+type LinkedRecord = Record<string, unknown> & { next: LinkedRecord };
+interface ArrayNode extends Record<string, unknown> {
+  array: CyclicArray;
+}
+type CyclicArray = [string, ArrayNode];
+type DeepNode = Record<string, unknown> & {
+  child?: DeepNode;
+  cycle?: DeepNode;
+};
+
 describe("string interpolation", () => {
   it("should interpolate a simple string", () => {
     const result = interpolate("Hello ${NAME:Guest}!", { NAME: "John" });
@@ -831,5 +842,139 @@ describe("branch coverage tests", () => {
 
     // This verifies the same behavior that would occur
     // if process was undefined and defaults was {}
+  });
+});
+
+describe("cycle-safe object traversal", () => {
+  it("handles cyclic objects without stack overflow", () => {
+    const obj: Record<string, unknown> = { name: "${NAME:test}" };
+    obj.self = obj;
+
+    const result = interpolate(obj, { NAME: "cyclic" });
+    expect(result.name).toBe("cyclic");
+    expect(result.self).toBe(result); // Same reference
+  });
+
+  it("handles cyclic arrays without stack overflow", () => {
+    const arr: unknown[] = ["${VALUE:hello}"];
+    arr.push(arr);
+
+    const result = interpolate(arr, { VALUE: "world" });
+    expect(result[0]).toBe("world");
+    expect(result[1]).toBe(result); // Same reference
+  });
+
+  it("handles complex nested cycles", () => {
+    const a: Record<string, unknown> = { name: "${A:valueA}" };
+    const b: Record<string, unknown> = { name: "${B:valueB}", ref: a };
+    a.ref = b;
+
+    const result = interpolate({ root: a }, { A: "testA", B: "testB" }) as {
+      root: NestedRefRecord;
+    };
+    expect(result.root.name).toBe("testA");
+    expect(result.root.ref.name).toBe("testB");
+    expect(result.root.ref.ref).toBe(result.root); // Cyclic reference preserved
+  });
+
+  it("handles multiple cycles in the same structure", () => {
+    const a: Record<string, unknown> = { id: "a", value: "${A:defaultA}" };
+    const b: Record<string, unknown> = { id: "b", value: "${B:defaultB}" };
+    const c: Record<string, unknown> = { id: "c", value: "${C:defaultC}" };
+
+    // Create multiple cycles: a -> b -> a, and c -> c
+    a.next = b;
+    b.next = a;
+    c.next = c;
+
+    const container = { first: a, second: c };
+    const result = interpolate(container, {
+      A: "replacedA",
+      B: "replacedB",
+    }) as {
+      first: LinkedRecord;
+      second: LinkedRecord;
+    };
+
+    expect(result.first.value).toBe("replacedA");
+    expect(result.first.next.value).toBe("replacedB");
+    expect(result.first.next.next).toBe(result.first); // a -> b -> a cycle preserved
+    expect(result.second.value).toBe("defaultC");
+    expect(result.second.next).toBe(result.second); // c -> c cycle preserved
+  });
+
+  it("handles cycles with arrays and objects mixed", () => {
+    const obj: Record<string, unknown> = {
+      type: "object",
+      content: "${OBJ:objValue}",
+    };
+    const arr: unknown[] = ["${ARR:arrValue}", obj];
+    obj.array = arr;
+
+    const result = interpolate(arr, {
+      OBJ: "replacedObj",
+      ARR: "replacedArr",
+    }) as CyclicArray;
+    expect(result[0]).toBe("replacedArr");
+    const interpolatedObject = result[1];
+    expect(interpolatedObject.content).toBe("replacedObj");
+    expect(interpolatedObject.array).toBe(result); // Cycle preserved
+    expect(interpolatedObject.array[1]).toBe(interpolatedObject); // Object reference preserved
+  });
+
+  it("maintains object identity for non-cyclic shared references", () => {
+    const shared = { name: "${SHARED:sharedValue}" };
+    const container = {
+      ref1: shared,
+      ref2: shared,
+      nested: { ref3: shared },
+    };
+
+    const result = interpolate(container, { SHARED: "replaced" });
+    expect(result.ref1.name).toBe("replaced");
+    expect(result.ref1).toBe(result.ref2); // Same reference preserved
+    expect(result.ref1).toBe(result.nested.ref3); // Same reference preserved
+  });
+
+  it("handles cycles in deeply nested structures", () => {
+    const deep1: Record<string, unknown> = {
+      level: 1,
+      value: "${DEEP1:deep1Value}",
+    };
+    const deep2: Record<string, unknown> = {
+      level: 2,
+      value: "${DEEP2:deep2Value}",
+      child: deep1,
+    };
+    const deep3: Record<string, unknown> = {
+      level: 3,
+      value: "${DEEP3:deep3Value}",
+      child: deep2,
+    };
+
+    // Create cycle: deep1 -> deep3 (skipping deep2)
+    deep1.cycle = deep3;
+
+    const result = interpolate(deep3, {
+      DEEP1: "replaced1",
+      DEEP3: "replaced3",
+    }) as DeepNode & {
+      child: DeepNode & { child: DeepNode };
+    };
+    expect(result.value).toBe("replaced3");
+    const child = result.child;
+    expect(child.value).toBe("deep2Value");
+    const grandChild = child.child;
+    expect(grandChild.value).toBe("replaced1");
+    expect(grandChild.cycle).toBe(result); // Cycle preserved
+  });
+
+  it("preserves cycles even when no interpolation occurs", () => {
+    const obj: Record<string, unknown> = { static: "no placeholders here" };
+    obj.self = obj;
+
+    const result = interpolate(obj, {});
+    expect(result.static).toBe("no placeholders here");
+    expect(result.self).toBe(result); // Cycle preserved even without interpolation
   });
 });
