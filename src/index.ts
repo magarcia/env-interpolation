@@ -270,15 +270,17 @@ function replace(
       }
 
       if (!isValidVarName(key)) {
-        // Leave placeholder literal; normalize backslashes (remove one if odd)
-        const removeOne = escape && backslashes % 2 === 1 ? 1 : 0;
-        result =
+        // Leave placeholder literal; handle backslashes same as valid placeholders
+        let finalBackslashes = backslashes;
+        if (escape && backslashes > 0) {
+          finalBackslashes = Math.floor(backslashes / 2);
+        }
+        const prefix =
           result.substring(0, start - backslashes) +
-          "\\".repeat(backslashes - removeOne) +
-          "${" +
-          result.substring(start + 2);
+          "\\".repeat(finalBackslashes);
+        result = prefix + "${" + result.substring(start + 2);
         // Move search position past this placeholder to avoid infinite loop
-        searchFrom = start - backslashes + (backslashes - removeOne) + 2;
+        searchFrom = prefix.length + 2;
         anyChange = true;
         continue;
       }
