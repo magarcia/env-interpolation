@@ -99,6 +99,7 @@ function unquote(s: string): string {
  * within default values. It scans from a given index and returns detailed information
  * about the first complete placeholder found.
  *
+ * @internal
  * @param str The string to search for placeholders.
  * @param fromIndex The starting index for the search. Defaults to 0.
  * @returns An object containing placeholder metadata (start, end, inner content, full text) or null if no placeholder is found.
@@ -190,6 +191,7 @@ function isValidVarName(key: string): boolean {
  * and iterative processing until no more changes occur. Variable names must contain only
  * letters, numbers, and underscores to be considered valid.
  *
+ * @internal
  * @param content The string content to interpolate.
  * @param variables A map of variable names to their string values. Defaults to `process.env`.
  * @param options Configuration options including escape processing behavior.
@@ -413,4 +415,5 @@ export function interpolate<T extends Input>(
 }
 
 // Export internal functions for testing
+/** @internal */
 export { findNextPlaceholder, replace };
