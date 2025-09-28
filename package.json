@@ -51,7 +51,7 @@
     "coverage": "vitest run --coverage",
     "prepare": "husky",
     "precommit": "lint-staged",
-    "prepush": "npm run test && npm run typecheck && npm run build",
+    "prepush": "npm run lint && npm run test && npm run typecheck && npm run build",
     "release": "semantic-release",
     "release:dry": "semantic-release --dry-run",
     "deps:check": "npm-check-updates",
