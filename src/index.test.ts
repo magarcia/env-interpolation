@@ -706,6 +706,90 @@ describe("enhanced edge cases and performance", () => {
   });
 });
 
+describe("configurable maxPasses", () => {
+  it("respects custom maxPasses limit", () => {
+    // Test with lower limit
+    const result1 = interpolate("${A:${B:${C:default}}}", {}, { maxPasses: 1 });
+    expect(result1).toBe("${B:${C:default}}"); // Only 1 pass, partially resolved
+
+    // Test with higher limit
+    const result2 = interpolate("${A:${B:${C:default}}}", {}, { maxPasses: 5 });
+    expect(result2).toBe("default"); // Fully resolved
+  });
+
+  it("default maxPasses maintains backward compatibility", () => {
+    const input = "${A:${B:${C:default}}}";
+    const result1 = interpolate(input, {});
+    const result2 = interpolate(input, {}, {});
+    const result3 = interpolate(input, {}, { maxPasses: 10 });
+
+    expect(result1).toBe("default");
+    expect(result2).toBe("default");
+    expect(result3).toBe("default");
+  });
+
+  it("maxPasses = 0 prevents any interpolation", () => {
+    const result = interpolate(
+      "${VAR:default}",
+      { VAR: "value" },
+      { maxPasses: 0 },
+    );
+    expect(result).toBe("${VAR:default}"); // No passes allowed, unchanged
+  });
+
+  it("maxPasses works with nested placeholders requiring multiple passes", () => {
+    const variables = {
+      LEVEL1: "${LEVEL2:default2}",
+      LEVEL2: "${LEVEL3:default3}",
+      LEVEL3: "final_value",
+    };
+
+    // With maxPasses = 1, only LEVEL1 resolves
+    const result1 = interpolate("${LEVEL1}", variables, { maxPasses: 1 });
+    expect(result1).toBe("${LEVEL2:default2}");
+
+    // With maxPasses = 2, LEVEL1 and LEVEL2 resolve
+    const result2 = interpolate("${LEVEL1}", variables, { maxPasses: 2 });
+    expect(result2).toBe("${LEVEL3:default3}");
+
+    // With maxPasses = 3, all levels resolve
+    const result3 = interpolate("${LEVEL1}", variables, { maxPasses: 3 });
+    expect(result3).toBe("final_value");
+  });
+
+  it("maxPasses works correctly with self-referential variables", () => {
+    const variables = { A: "${A:fallback}" };
+
+    // With maxPasses = 1, self-reference resolves once
+    const result1 = interpolate("${A}", variables, { maxPasses: 1 });
+    expect(result1).toBe("${A:fallback}");
+
+    // With maxPasses = 2, it stays the same (A is still defined, so fallback won't be used)
+    const result2 = interpolate("${A}", variables, { maxPasses: 2 });
+    expect(result2).toBe("${A:fallback}");
+
+    // To test actual fallback, we need a case where the variable becomes undefined
+    const result3 = interpolate("${B:${A:fallback}}", {}, { maxPasses: 2 });
+    expect(result3).toBe("fallback"); // B is undefined, so use default ${A:fallback}, then A is undefined so use fallback
+  });
+
+  it("maxPasses combines with escape option correctly", () => {
+    const result = interpolate(
+      "\\${A:${B:default}}",
+      {},
+      { maxPasses: 1, escape: true },
+    );
+    expect(result).toBe("${A:${B:default}}"); // Escaped, so maxPasses doesn't matter
+
+    const result2 = interpolate(
+      "${A:${B:default}}",
+      {},
+      { maxPasses: 1, escape: true },
+    );
+    expect(result2).toBe("${B:default}"); // Not escaped, limited by maxPasses
+  });
+});
+
 describe("branch coverage tests", () => {
   it("should trigger escape default parameter (branch 11)", () => {
     // Pass options object without escape property to trigger default

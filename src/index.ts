@@ -40,6 +40,12 @@ export type Input = string | PlainObject | Array<unknown>;
  * const options: InterpolateOptions = { escape: false };
  * interpolate('Keep \\${LITERAL} unchanged', {}, options);
  * // Returns: 'Keep \\${LITERAL} unchanged'
+ *
+ * @example
+ * // Custom maximum interpolation passes
+ * const options: InterpolateOptions = { maxPasses: 5 };
+ * interpolate('${A:${B:${C:default}}}', {}, options);
+ * // Limits nested resolution to 5 passes maximum
  */
 export interface InterpolateOptions {
   /**
@@ -48,6 +54,15 @@ export interface InterpolateOptions {
    * Pairs of backslashes are reduced to single backslashes. Defaults to true.
    */
   escape?: boolean;
+  /**
+   * Maximum number of interpolation passes to prevent infinite loops with
+   * self-referential or deeply nested placeholders. Each pass attempts to
+   * resolve all placeholders in the string. Defaults to 10.
+   *
+   * Lower values can prevent excessive processing time for complex nested
+   * structures, while higher values allow for deeper nesting resolution.
+   */
+  maxPasses?: number;
 }
 
 // Precompiled validation regex for variable names (letters, numbers, underscore)
@@ -212,14 +227,14 @@ function replace(
 ): string {
   let result = content;
   let previous: string | undefined;
-  const { escape = true } = options;
+  const { escape = true, maxPasses = MAX_INTERPOLATION_PASSES } = options;
 
   // Iterate until no more changes (supports nested placeholders resolved via defaults)
   let passes = 0;
   do {
     previous = result;
     passes++;
-    if (passes > MAX_INTERPOLATION_PASSES) break;
+    if (passes > maxPasses) break;
 
     let searchFrom = 0;
     let anyChange = false;
