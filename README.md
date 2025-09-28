@@ -119,6 +119,28 @@ const result = interpolate(settings);
 // result has the same readonly structure as `settings`
 ```
 
+## Security Considerations
+
+⚠️ **Warning**: Interpolating secrets into logs or HTML can leak sensitive information. Prefer resolving variables at the application edge and redacting secrets in logs.
+
+## Browser Usage
+
+Since `process.env` isn't available in browsers, pass variables explicitly:
+
+```javascript
+import { interpolate } from "env-interpolation";
+
+const config = {
+  apiUrl: "${API_URL:https://api.example.com}",
+  timeout: "${TIMEOUT:5000}",
+};
+
+const result = interpolate(config, {
+  API_URL: "https://prod-api.example.com",
+  TIMEOUT: "10000",
+});
+```
+
 ## Testing & development
 
 - `npm run test` – run the Vitest suite (covers string, object, and array interpolation).
