@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/magarcia/env-interpolation/compare/v1.1.0...v1.1.1) (2025-10-07)
+
+### Bug Fixes
+
+- add issues write permission to dependency-check workflow ([99164a2](https://github.com/magarcia/env-interpolation/commit/99164a2fd0900563fda3e19ff0fe7739ca462b44))
+- remove GitHub Discussions requirement from release config ([d52cf5a](https://github.com/magarcia/env-interpolation/commit/d52cf5a1e67c6a37def33601f1b64bd22c2907b7))
+
 # [1.1.0](https://github.com/magarcia/env-interpolation/compare/v1.0.0...v1.1.0) (2025-09-28)
 
 ### Bug Fixes
