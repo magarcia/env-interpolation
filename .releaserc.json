@@ -31,7 +31,6 @@
           "released<%= nextRelease.channel ? ` on @${nextRelease.channel}` : '' %>"
         ],
         "addReleases": "top",
-        "discussionCategoryName": "Announcements",
         "releaseNameTemplate": "<%= nextRelease.name %> 🚀",
         "releaseBodyTemplate": "## What's Changed\n\n<%= nextRelease.notes %>\n\n**Full Changelog**: https://github.com/magarcia/env-interpolation/compare/<%= lastRelease.gitTag %>...<%= nextRelease.gitTag %>"
       }
