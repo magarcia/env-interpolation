@@ -1,3 +1,9 @@
+## [1.1.2](https://github.com/magarcia/env-interpolation/compare/v1.1.1...v1.1.2) (2026-11-08)
+
+### Bug Fixes
+
+- **deps:** update all dependencies to latest ([#6](https://github.com/magarcia/env-interpolation/issues/6)) ([b23a246](https://github.com/magarcia/env-interpolation/commit/b23a2465c450db72c010412d7fc4efd2833c6457)), closes [#5](https://github.com/magarcia/env-interpolation/issues/5)
+
 ## [1.1.1](https://github.com/magarcia/env-interpolation/compare/v1.1.0...v1.1.1) (2025-10-07)
 
 ### Bug Fixes
