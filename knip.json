@@ -1,7 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "project": ["src/**/*.ts"],
-  "ignoreDependencies": ["@semantic-release/github"],
+  "ignoreDependencies": [
+    "@semantic-release/github",
+    "conventional-commits-filter"
+  ],
   "ignoreExportsUsedInFile": true,
   "eslint": true,
   "prettier": true,
