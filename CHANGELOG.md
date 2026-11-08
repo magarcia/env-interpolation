@@ -1,3 +1,9 @@
+## [1.1.3](https://github.com/magarcia/env-interpolation/compare/v1.1.2...v1.1.3) (2026-11-08)
+
+### Bug Fixes
+
+- **release:** use valid template variables in successComment ([c7c4c73](https://github.com/magarcia/env-interpolation/commit/c7c4c7357a2268240b920e7d705a9dd4e79ec732))
+
 ## [1.1.2](https://github.com/magarcia/env-interpolation/compare/v1.1.1...v1.1.2) (2026-11-08)
 
 ### Bug Fixes
