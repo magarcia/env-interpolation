@@ -145,7 +145,7 @@ Ready to contribute? Here's how to set up your environment and get started.
 
 **Prerequisites**
 
-- [Node.js](https://nodejs.org/) (v18 or higher)
+- [Node.js](https://nodejs.org/) (v22.18 or higher; v24 LTS recommended)
 - [npm](https://www.npmjs.com/)
 
 **Setup**
