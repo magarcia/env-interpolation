@@ -69,28 +69,29 @@
   },
   "homepage": "https://github.com/magarcia/env-interpolation#readme",
   "devDependencies": {
-    "@commitlint/cli": "^20.1.0",
-    "@commitlint/config-conventional": "^20.0.0",
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^11.0.6",
-    "@types/node": "^24.7.2",
-    "@vitest/coverage-istanbul": "^3.2.4",
-    "eslint": "^9.37.0",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/git": "^11.0.1",
+    "@semantic-release/github": "^12.0.10",
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-istanbul": "^5.1.0",
+    "conventional-commits-filter": "^6.0.1",
+    "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^61.1.4",
-    "eslint-plugin-prettier": "^5.5.4",
-    "globals": "^16.4.0",
+    "eslint-plugin-jsdoc": "^65.4.5",
+    "eslint-plugin-prettier": "^5.5.7",
+    "globals": "^17.14.0",
     "husky": "^9.1.7",
-    "knip": "^5.65.0",
-    "lint-staged": "^16.2.4",
-    "npm-check-updates": "^19.1.0",
-    "prettier": "^3.6.2",
-    "semantic-release": "^24.2.9",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.1",
-    "vitest": "^3.2.4"
+    "knip": "^6.44.2",
+    "lint-staged": "^17.6.0",
+    "npm-check-updates": "^23.1.1",
+    "prettier": "^3.9.10",
+    "semantic-release": "^25.0.9",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.1.0"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx,mjs,cjs}": [
@@ -103,5 +104,9 @@
     "*.{css,scss,less}": [
       "prettier --write"
     ]
+  },
+  "overrides": {
+    "glob": "^14.0.4",
+    "minimatch": "^11.0.5"
   }
 }
