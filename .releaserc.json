@@ -25,8 +25,8 @@
             "label": "Package manifest"
           }
         ],
-        "successComment": ":tada: This ${issue.pull_request ? 'pull request' : 'issue'} is included in version ${nextRelease.version} :tada:\n\nThe release is available on [GitHub release](<github_release_url>) and [npm](https://www.npmjs.com/package/${name})",
-        "successCommentCondition": "<%= issue.user.type !== 'Bot' %>",
+        "successComment": ":tada: This ${issue.pull_request ? 'pull request' : 'issue'} is included in version ${nextRelease.version} :tada:\n\nThe release is available on [GitHub release](https://github.com/magarcia/env-interpolation/releases/tag/${nextRelease.gitTag}) and [npm](https://www.npmjs.com/package/env-interpolation)",
+        "successCommentCondition": "<% return issue.user.type !== 'Bot'; %>",
         "releasedLabels": [
           "released<%= nextRelease.channel ? ` on @${nextRelease.channel}` : '' %>"
         ],
