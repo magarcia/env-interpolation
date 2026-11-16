@@ -13,6 +13,157 @@ type DeepNode = Record<string, unknown> & {
   cycle?: DeepNode;
 };
 
+describe("issue #7", () => {
+  it("keeps escaped placeholders literal when another placeholder resolves", () => {
+    expect(interpolate("Literal \\${A} and ${B}", { A: "1", B: "2" })).toBe(
+      "Literal ${A} and 2",
+    );
+  });
+
+  it("uses defaults for inherited Object.prototype properties", () => {
+    expect(interpolate("Hello ${constructor:Guest}", {})).toBe("Hello Guest");
+  });
+
+  it("preserves missing placeholders for inherited Object.prototype properties", () => {
+    expect(interpolate("${toString}", {})).toBe("${toString}");
+  });
+
+  it("ignores inherited properties when using process.env", () => {
+    expect(interpolate("${toString}")).toBe("${toString}");
+  });
+
+  it.each([
+    ["\\${A} ${A} \\${A} ${B}", "${A} 1 ${A} 2"],
+    ["\\\\\\${A} ${B}", "\\${A} 2"],
+    ["\\${OUTER:${A}} ${B}", "${OUTER:${A}} 2"],
+    ["${OUTER:\\${A} and ${B}}", "${A} and 2"],
+    ['${OUTER:"\\${A} and ${B}"}', "${A} and 2"],
+    ["\\${INVALID-NAME:${A}} ${B}", "${INVALID-NAME:${A}} 2"],
+  ])("preserves escaped text in %s", (input, expected) => {
+    expect(interpolate(input, { A: "1", B: "2" })).toBe(expected);
+  });
+
+  it.each([
+    [0, "\\${A} ${B}"],
+    [1, "${A} ${C}"],
+    [2, "${A} ${D}"],
+    [3, "${A} 2"],
+  ])("preserves escaped text with maxPasses = %i", (maxPasses, expected) => {
+    const variables = { A: "1", B: "${C}", C: "${D}", D: "2" };
+
+    expect(interpolate("\\${A} ${B}", variables, { maxPasses })).toBe(expected);
+  });
+
+  it("preserves escaped placeholders introduced by variable values", () => {
+    const variables = {
+      VALUE: "\\${A} and ${B}",
+      A: "1",
+      B: "${C}",
+      C: "2",
+    };
+
+    expect(interpolate("${VALUE}", variables)).toBe("${A} and 2");
+    expect(interpolate("${VALUE}", variables, { maxPasses: 1 })).toBe(
+      "\\${A} and ${B}",
+    );
+  });
+
+  it("resolves an enclosing default assembled around escaped text", () => {
+    const variables = { OPEN: "${MISSING:", A: "1", CLOSE: "}" };
+
+    expect(interpolate("${OPEN}\\${A}${CLOSE}", variables)).toBe("${A}");
+  });
+
+  it("resolves escaped placeholders when escaping is disabled across passes", () => {
+    expect(
+      interpolate(
+        "\\${A} and ${B}",
+        { A: "${C}", B: "2", C: "1" },
+        { escape: false },
+      ),
+    ).toBe("\\1 and 2");
+  });
+
+  it.each(["\0", "\0d", "\0\0d", "\0d\0"])(
+    "preserves literal NUL text %j in input, variables, and defaults",
+    (literal) => {
+      const input =
+        "${VALUE} " + literal + " \\${A} ${B} ${MISSING:" + literal + "}";
+      const variables = { VALUE: literal, A: "1", B: "${C}", C: "2" };
+
+      expect(interpolate(input, variables)).toBe(
+        literal + " " + literal + " ${A} 2 " + literal,
+      );
+      expect(interpolate(input, variables, { maxPasses: 0 })).toBe(input);
+    },
+  );
+
+  it.each(["constructor", "toString", "hasOwnProperty", "__proto__"])(
+    "resolves a deliberately supplied own property named %s",
+    (key) => {
+      expect(interpolate(`\${${key}:fallback}`, { [key]: "own" })).toBe("own");
+    },
+  );
+
+  it("uses defaults for own undefined properties and preserves empty values", () => {
+    expect(
+      interpolate("${constructor:Guest}/${toString:fallback}", {
+        constructor: undefined,
+        toString: "",
+      }),
+    ).toBe("Guest/");
+  });
+
+  it("supports null-prototype variable maps", () => {
+    const variables: Record<string, string | undefined> = Object.assign(
+      Object.create(null),
+      { constructor: "own", toString: "string" },
+    );
+
+    expect(
+      interpolate(
+        "${constructor} ${toString} ${hasOwnProperty:fallback}",
+        variables,
+      ),
+    ).toBe("own string fallback");
+  });
+
+  it("ignores custom inherited keys without reading inherited getters", () => {
+    const variables: Record<string, string | undefined> = Object.create({
+      get NAME() {
+        throw new Error("Inherited properties must not be read");
+      },
+    });
+    variables.OWN = "own";
+
+    expect(interpolate("${NAME:Guest} ${NAME} ${OWN}", variables)).toBe(
+      "Guest ${NAME} own",
+    );
+  });
+
+  it("handles both fixes in nested objects and arrays without mutating inputs", () => {
+    const input = Object.freeze({
+      message: "\\${A} ${B}",
+      nested: Object.freeze([
+        "${constructor:Guest}",
+        Object.freeze({ missing: "${toString}", message: "${VALUE}" }),
+      ]),
+    });
+    const before = structuredClone(input);
+    const variables = Object.freeze({ A: "1", B: "2", VALUE: "\\${A} ${B}" });
+
+    const result = interpolate(input, variables);
+
+    expect(result).toEqual({
+      message: "${A} 2",
+      nested: ["Guest", { missing: "${toString}", message: "${A} 2" }],
+    });
+    expect(input).toEqual(before);
+    expect(result).not.toBe(input);
+    expect(result.nested).not.toBe(input.nested);
+  });
+});
+
 describe("string interpolation", () => {
   it("should interpolate a simple string", () => {
     const result = interpolate("Hello ${NAME:Guest}!", { NAME: "John" });

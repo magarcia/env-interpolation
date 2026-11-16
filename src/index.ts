@@ -227,9 +227,12 @@ function replace(
   variables: Record<string, string | undefined> = defaults,
   options: InterpolateOptions = { escape: true },
 ): string {
-  let result = content;
-  let previous: string | undefined;
   const { escape = true, maxPasses = MAX_INTERPOLATION_PASSES } = options;
+  // Double literal NULs; NUL-d is reserved for escaped dollar signs.
+  const encodeNulls = (value: string): string =>
+    escape ? value.replaceAll("\0", "\0\0") : value;
+  let result = encodeNulls(content);
+  let previous: string | undefined;
 
   // Iterate until no more changes (supports nested placeholders resolved via defaults)
   let passes = 0;
@@ -263,7 +266,7 @@ function replace(
         const prefix =
           result.substring(0, start - backslashes) +
           "\\".repeat(remainingBackslashes);
-        const literal = result.substring(start, end + 1);
+        const literal = result.substring(start, end + 1).replaceAll("$", "\0d");
         result = prefix + literal + result.substring(end + 1);
         // Skip past the escaped placeholder to avoid processing it again
         searchFrom = prefix.length + literal.length;
@@ -287,11 +290,11 @@ function replace(
         continue;
       }
 
-      const value = variables[key];
+      const value = Object.hasOwn(variables, key) ? variables[key] : undefined;
       let replacement = full; // default: keep original
 
       if (value !== undefined) {
-        replacement = String(value);
+        replacement = encodeNulls(String(value));
         anyChange = true;
       } else if (defaultValue !== undefined) {
         // Empty default (e.g. ${NAME:}) => keep original placeholder
@@ -322,7 +325,11 @@ function replace(
     if (!anyChange) break;
   } while (result !== previous);
 
-  return result;
+  return escape
+    ? result.replace(/\0(\0|d)/g, (_, code: string) =>
+        code === "d" ? "$" : "\0",
+      )
+    : result;
 }
 
 function traverse(
