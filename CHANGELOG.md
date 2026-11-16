@@ -1,3 +1,9 @@
+## [1.1.4](https://github.com/magarcia/env-interpolation/compare/v1.1.3...v1.1.4) (2026-11-16)
+
+### Bug Fixes
+
+- preserve escaped placeholders and ignore inherited variables ([#8](https://github.com/magarcia/env-interpolation/issues/8)) ([68193b7](https://github.com/magarcia/env-interpolation/commit/68193b7e2fe2307ddaf0f199d523ee8113aa0320)), closes [#7](https://github.com/magarcia/env-interpolation/issues/7)
+
 ## [1.1.3](https://github.com/magarcia/env-interpolation/compare/v1.1.2...v1.1.3) (2026-11-08)
 
 ### Bug Fixes
